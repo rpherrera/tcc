@@ -1,0 +1,23 @@
+TCC: Um estudo sobre o uso de Honeypots
+Autor: Rafael de Paula Herrera
+Orientador: Mario Lemes Proença Jr.
+
+Trabalho apresentado à Universidade Estadual de Londrina,
+como parte do requisito para a obtenção do título de
+Bacharel em Ciência da Computação, sob orientação do
+Prof. Dr. Mario Lemes Proença Jr.
+
+Universidade Estadual de Londrina - 2009
+
+
+1) Para compilar o projeto LATEX, utilize o editor de Kile:
+- Arquivo do projeto: tcc.kilepr
+
+2) Rode no shell, o script 'makeindex' para criação da lista
+de siglas:
+- ./makeindex
+
+3) Compile novamente o projeto, para que as siglas sejam
+agregadas.
+
+3) O documento gerado será 'tcc.pdf'

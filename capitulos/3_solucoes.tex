@@ -1,0 +1,335 @@
+\chapter{Soluções em Honeypots}\label{capitulo:solucoes}
+
+Neste trabalho, serão abordadas as soluções em \textit{Honeypots} compreendidas pela lista:
+
+\begin{itemize}
+    \item Honeyd
+    \item Google Hack Honeypot
+    \item Honeypots caseiros
+    \item Honeytrap
+    \item Nephentes
+    \item Argos
+\end{itemize}
+
+Suas principais características serão exploradas, levando em consideração eventuais notas que tenham relevância, no que compete a detalhes de implantação. A tabela \ref{tabela:comparativo_honeypots} mostra um comparativo entre as soluções a serem abordadas, de acordo com seus propósito principais:
+
+\begin{table}[h]
+    \begin{center}
+        \caption{\label{tabela:comparativo_honeypots}Comparativo entre tecnologias em \textit{Honeypots}}
+        \begin{tabular}{c|c}
+            \hline
+            \hline
+                \textbf{Tecnologia} & \textbf{Propósito}\\
+            \hline
+                Honeyd & Monitoramento de pseudo-serviços\\
+            \hline
+                Google Hack Honeypot & Monitoramento em aplicações \textit{Web}\\
+            \hline
+                Honeypots caseiros & Captura de \textit{payloads}\\
+            \hline
+                Honeytrap & Captura e análise de \textit{malwares}\\
+            \hline
+                Nephentes & Monitoramento de serviços e captura de \textit{worms}\\
+            \hline
+                Argos & Identificação de novos ataques\\
+            \hline
+            \hline
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\section{Honeyd}
+
+\textit{Honeyd} é um \textit{framework} criado para de permitir a associação de centenas e até milhares de endereços \textit{IP} a uma única máquina, no intuito de simular ambientes distintos, onde, em cada um deles é possível se atribuir o comportamento de um determinado Sistema Operacional e seus serviços \textit{TCP} e \textit{UDP}, com vulnerabilidades e características específicas, atraindo a atenção de atacantes em potencial e coletando dados sobre os ataques que sejam eventualmente lançados. \cite{VirtualHoneypots}
+
+A ideia de se ter múltiplos endereços de \textit{IP} associados a uma única máquina, é justamente a de se configurar vários ambientes falsos e distintos em um único computador, ao mesmo tempo que estes servem como iscas a públicos variados e que possam representar diferentes níveis de risco às rede em que sejam implantados. Em geral, a escolha dos endereços de \textit{IP} a serem atribuidos aos sistemas falsos, é dada através da identificação, na rede, daqueles que não são utilizados, com a possibilidade de se estabelecer políticas para tal, como por exemplo a inserção de uma máquina supostamente comprometida entre endereços de \textit{IP} vizinhos completamente saudáveis em um ambiente de produção, causando aos olhos de um atacante, um embaralhamento entre computadores comprometidos e a topologia padrão previamente estabelecida, o que é extremamente comum e conveniente em meio a uma simulação, uma vez que a identificação automática dos alvos como sendo realmente falsos, torna-se impraticável, caso o processo de denfinição dos endereços de \textit{IP} seja guiado totalmente ao acaso.
+
+Uma configuração típica, que faz uso tanto do recurso de múltiplos endereços de \textit{IP} e de variados Sistemas Operacionais pode ser obtida através do uso do honeyd em conjunção a uma implementação de \textit{Proxy ARP}\sigla{ARP}{Address Resolution Protocol}, que irá atuar como um chaveador, encaminhando as requisições feitas aos múltiplos endereços \textit{IP} aos seus respectivos Sistemas Operacionais falsos, cada qual provido de uma implementação de sua pilha de rede (compatível com a que foi implementada na versão do sistema emulado) e de um conjunto de serviços falsos, mas capazes de responder a tentativas iniciais de comunicação, sendo assim, válidos perante os atacantes nos primeiros contatos, tendo até mesmo seus tempos de resposta ajustados para que se pareçam, ao máximo, com suas versões legítimas.
+
+A possibilidade de customização de um ambiente que simula um Sistema Operacional e seus serviços, permite que se crie \textit{Honeypots} com finalidades específicas. Um dos computadores virtuais pode responder, por exemplo, como hospedeiro de uma versão arbitrária do Sistema Operacional \textit{Windows} e que seja suscetível a alguma falha de segurança, também arbitrária, mas que permita sua exploração por \textit{malwares}. Devido às características de uso desse Sistema Operacional, este cenário é propício à identificação de varreduras automáticas realizadas por computadores usualmente também infectados pelo mesmo \textit{malware}. Isso revela quais são as máquinas comprometidas e proporciona um avanço no grau de agilidade quanto às decisões a serem tomadas sobre manutenções urgentes, contribuindo assim com a eliminação do tráfego de pacotes maliciosos e com a diminuição de computadores infectados.
+
+
+\subsection{Requisitos de implantação}
+
+Para que seja possível sua implantação, o \textit{honeyd} exige que sejam satisfeitas algumas dependências relacionadas às bibliotecas compartilhadas utilizadas em sua implementação, tais como:
+
+\begin{itemize}
+    \item \textit{libdnet} \cite{Libdnet}: provê uma interface simplificada e portável para muitas rotinas de baixo-nível relacionadas à comunicação em redes, incluindo: manipulação de endereços de rede, \textit{cache} de \textit{arp} do \textit{kernel}, consulta e manipulação da tabela de rotas, integração com \textit{firewalls} (como \textit{IP filter}, \textit{ipfw}, \textit{ipchains}, \textit{pf} e \textit{PktFilter}), consulta e manipulação da interface de rede, tunelamento \textit{IP} (\textit{tun} do \textit{BSD}/\textit{Linux}, dispositivo universal \textit{TUN}/\textit{TAP}) e transmissão de pacotes \textit{IP} puros e de \textit{frames Ethernet}. Suporta as linguagens \textit{C}, \textit{C++}, \textit{Python}, \textit{Perl} e \textit{Ruby}. Roda oficialmente sob as plataformas \textit{BSD} (\textit{OpenBSD}, \textit{FreeBSD}, \textit{NetBSD}, \textit{BSD/OS}), \textit{Linux} (\textit{Slackware}, \textit{Redhat}, \textit{Debian} e demais sabores), \textit{MacOS X}, \textit{Windows} (\textit{NT}/\textit{2000}/\textit{XP}), \textit{Solaris}, \textit{IRIX}, \textit{HP-UX} e \textit{Tru64}.
+
+    \item A \textit{API} \textit{libevent} \cite{Libevent} provê um mecanismo para executar funções de \textit{callback} quando um evento específico ocorrer nos descritores de um arquivo, ou assim que um \textit{timeout} seja alcançado. Além disso, suporta \textit{callbacks} por sinais ou \textit{timeouts} regulares.
+
+    \item \textit{libpcap} \cite{Libpcap} é uma interface independente para a captura de pacotes em espaço de usuário, provê um \textit{framework} portável para monitoramento de redes em baixo-nível. É aplicável por exemplo, na coleta de dados estatísticos de rede, monitoramento de segurança ou mesmo, o \textit{debug} de rede.
+
+    \item A biblioteca \textit{PCRE} \cite{PCRE} \sigla{PCRE}{Perl Compatible Regular Expressions} é um conjunto de funções que implementam padrões de identificação para expressões regulares utilizando a mesma semantica e sintaxe que \textit{Perl 5}. \textit{PCRE} tem sua \textit{API} nativa, assim como um conjunto de funções \textit{wrapper} que correspondem às expressões regulares \textit{POSIX}.
+\end{itemize}
+
+
+\subsection{Manipulação de múltiplos endereços de IP}
+
+A configuração mais simples que pode ser obtida, afim de utilizar múltiplos endereços de \textit{IP} em um computador hospedeiro, direcionando o tráfego de entrada a cada um computador virtual criado pelo honeyd, respeitando os endereços de \textit{IP} de destino, pode ser obtida através dos utilitários de rede disponíveis em sistemas \textit{UNIX} (também conhecidos como \textit{net-tools}).
+
+Supondo que já exista um endereço \textit{IP} associado a interface de rede local, pode-se verificar isso através do utilitário ifconfig:
+
+\scriptsize
+\begin{verbatim}
+bodacious@mothership:~$ /sbin/ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:1d:92:bc:21:fc
+          inet addr:10.90.10.93  Bcast:10.90.10.255  Mask:255.255.255.0
+          inet6 addr: fe80::21d:92ff:febc:21fc/64 Scope:Link
+          UP BROADCAST NOTRAILERS RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:22802 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:13166 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:8618694 (8.2 MiB)  TX bytes:1853636 (1.7 MiB)
+          Interrupt:18 Base address:0x6000
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:5599 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:5599 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:4320001 (4.1 MiB)  TX bytes:4320001 (4.1 MiB)
+\end{verbatim}
+\normalsize
+
+Para realizar a atribuição de um endereço de \textit{IP} adicional à interface-física ethernet, identificada pelo endereço \textit{MAC} ``00:1d:92:bc:21:fc'', executa-se, como usuário privilegiado, o seguinte procedimento:
+
+\scriptsize
+\begin{verbatim}
+root@mothership:~# ifconfig eth0:1 10.90.10.94 netmask 255.255.255.0 up
+\end{verbatim}
+\normalsize
+
+Uma nova verificação da saída do ifconfig, deve revelar que novo endereço foi atribuído com sucesso ao \textit{alias} ``eth0:1'', estabelecido como identificador da interface virtual responsável pelo gerenciamento do novo endereço de \textit{IP}:
+
+\scriptsize
+\begin{verbatim}
+bodacious@mothership:~$ /sbin/ifconfig
+eth0      Link encap:Ethernet  HWaddr 00:1d:92:bc:21:fc
+          inet addr:10.90.10.93  Bcast:10.90.10.255  Mask:255.255.255.0
+          inet6 addr: fe80::21d:92ff:febc:21fc/64 Scope:Link
+          UP BROADCAST NOTRAILERS RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:50658 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:24479 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:13678318 (13.0 MiB)  TX bytes:2772362 (2.6 MiB)
+          Interrupt:18 Base address:0x6000
+
+eth0:1    Link encap:Ethernet  HWaddr 00:1d:92:bc:21:fc
+          inet addr:10.90.10.94  Bcast:10.90.10.255  Mask:255.255.255.0
+          UP BROADCAST NOTRAILERS RUNNING MULTICAST  MTU:1500  Metric:1
+          Interrupt:18 Base address:0x6000
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:6771 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:6771 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:4794574 (4.5 MiB)  TX bytes:4794574 (4.5 MiB)
+\end{verbatim}
+\normalsize
+
+Verifica-se através da tabela de rotas do \textit{Kernel}, que a rota-padrão de saída do sistema, é identificada por padrão, como sendo associada à interface \textit{eth0}:
+
+\scriptsize
+\begin{verbatim}
+bodacious@mothership:~$ /sbin/route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.90.10.0      *               255.255.255.0   U     0      0        0 eth0
+loopback        *               255.0.0.0       U     0      0        0 lo
+default         10.90.10.1      0.0.0.0         UG    0      0        0 eth0
+\end{verbatim}
+\normalsize
+
+Portanto, para testar a nova interface atribuida, ``eth0:1'', deve-se indicar aos utilitários como o \textit{ping}, qual o endereço de \textit{IP} de onde os pacotes devem ser transmitidos:
+
+\scriptsize
+\begin{verbatim}
+bodacious@mothership:~$ ping -c 1 -I 10.90.10.94 dc.uel.br
+PING dc.uel.br (189.90.67.67) from 10.90.10.94 : 56(84) bytes of data.
+64 bytes from beta.dc.uel.br (189.90.67.67): icmp_seq=1 ttl=63 time=0.122 ms
+
+--- dc.uel.br ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.122/0.122/0.122/0.000 ms
+\end{verbatim}
+\normalsize
+
+Com estes procedimentos, é possível se dar início à implantação do \textit{honeyd}, pois ele utiliza espaços de \textit{IP} não alocados na rede. Sendo capaz de associar vários endereço de \textit{IP} à interface de rede, o primeiro passo para que se possa implantar com sucesso este serviço está garantido.
+
+
+\section{Google Hack Honeypot}
+
+\textit{Google Hack Honeypot} \cite{GHH}, ou \textit{GHH}\sigla{GHH}{Google Hack Honeypot}, é uma ferramenta criada no intuito de se reagir a um novo tipo de ameaça: a utilização de mecanismos de busca para facilitar invasões. Foi projetado para reconhecer atacantes que utilizam os serviços de busca para encontrarem falhas de segurança em recursos desprotegidos.
+
+Os alvos identificados, têm em comum o fato de possuírem aplicações Web vulneráveis e indexadas pelos robôs de busca, podendo ser facilmente identificadas, através de características específicas de cada falha que possuem, e com isso, acabam atraindo ataques aos seus sistemas hospedeiros.
+
+O \textit{GHH} emula uma aplicação Web vulnerável e indexada pelos mecanismos de busca. É escondido dos visitantes tradicionais, mas é encontrado através da utilização de web-crawlers ou buscadores. Isso é possível através de um link transparente (não é detectado pela navegação convencional) estabelecido no momento que uma ferramenta indexa o site efetuando a leitura de seu código fonte (caracterizado pela presença de elementos \textit{HTML}\sigla{HTML}{Hypertext Markup Language}, \textit{XHTML}\sigla{XHTML}{Extensible Hypertext Markup Language}, \textit{XML}\sigla{XML}{Extensible Markup Language}, \textit{CSS}\sigla{CSS}{Cascading Style Sheet} e \textit{JavaScript}). O link transparente (quando bem configurado) reduz a quantidade de falsos-positivos e evita que seja possível a identificação, pelos atacantes, da ``impressão digital'' do \textit{Honeypot}.
+
+Todas as tentativas de varredura por falhas são registradas para análises posteriores. Dessa maneira, pode-se colocar em \textit{black-lists} os endereços de \textit{IP} (ou faixas inteiras destes) pertencentes a atacantes recorrentes e negar suas futuras tentativas de acesso, assim como notificar os provedores de que os ataques estão partindo de suas redes, ou então aplicar os dados obtidos na geração de estatísticas voltadas para a área de pesquisa.
+
+Com essa ferramenta, é possível prover às organizações um nível adicional de segurança à sua presença na Web, visto que cada vez mais sites e aplicações estão sendo indexados pelos mecanismos de busca. O reflexo maior deste fenômeno, é o aumento da quantidade de sistemas que são frequentemente mal-configurados (como fóruns de mensagens e painéis administrativos), motivo pelo qual são agregados riscos enormes (e desnecessários) tanto à segurança quanto à integridade dos dados, além de possivelmente ocorrer o comprometimento da boa utilização dos recursos. \textit{GHH} é uma ferramenta escrita em \textit{PHP} e é licensiada sob a \textit{GNU\sigla{GNU}{GNU Not Unix} Public License 2} \cite{GPL2}.
+
+
+\section{Honeypots caseiros}
+
+É possível criar um \textit{Honeypot} ``caseiro'' sem muito esforço. A técnica mais simples que pode ser empregada, consiste em acionar uma ou mais escutas em portas arbitrárias, sejam elas \textit{TCP} ou \textit{UDP}. Isso pode ser facilmente implementado pelo o uso do utilitário netcat, advindo do kit de ferramentas \textit{Unix}. É amplamente conhecido como ``o canivete suíço TCP/IP''. Este tipo de Honeypot é classificado como Honeypot de Monitoramento de Portas, tendo como característica marcante o fato de ser utilizado na identificação de scans, tentativas de descoberta de ``assinaturas'' geradas pelos serviços disponibilizados pelo servidor e atividades suspeitas/não-autorizadas, sejam elas manuais ou provenientes de ataques lançados por \textit{malwares}. \cite{Honeycomb}
+
+Existe outra classe de honeypots caseiros, que é obtida através da criação de ambientes básicos para que sistemas-operacionais possam ser ``enjaulados''. Essa técnica pode ser obtida através de uma preparação manual desse ambiente, ou através do acionamento de um método de criação de um novo ambiente, a partir de um template previamente configurado.
+
+\subsection{Honeypot de Monitoramento de Portas}
+
+\subsubsection{Sobre o netcat}
+
+O \textit{netcat} lê e escreve e dados através de conexões de rede, provendo um conjunto de funcionalidades que proporcionam realizar tanto o \textit{debug} quanto a exploração dos dados transmitidos. Tem a habilidade de trabalhar com os protocolos \textit{TCP} ou \textit{UDP}, operando de modo eficiente os \textit{pipes} de redirecionamento de entrada e saída. Trata-se de uma ótima ferramenta a ser integrada em tarefas automatizadas, sendo compatível com uma grande variedade de linguagens de \textit{scripting}, utilizadas amplamente no auxílio da administrações de servidores.
+
+Supondo que se queira abrir uma conexão \textit{TCP} para testes em um \textit{host} servidor, a sintaxe padrão de para a execução do \textit{netcat} é definida por:
+
+\scriptsize
+\begin{verbatim}
+nc -l -p porta
+\end{verbatim}
+\normalsize
+
+Onde os parâmetros tem o seguinte significado:
+-l: listening mode, ou seja, deve-se ``escutar'' por conexões, sendo isso o que caracteriza um ``servidor'', por mais que este exemplo seja trivial
+-p porta: especifica a porta em que a conexão deve ser disponibilizada
+
+Para se conectar como cliente ao host servidor, a sintaxe utilizada é:
+
+\scriptsize
+\begin{verbatim}
+nc host porta
+\end{verbatim}
+\normalsize
+
+Onde ``host'' deve ser o nome de host em que se deseja conectar e ``porta'', a porta cuja conexão deve ser estabelecida
+
+A conexão que pode ser aberta, utilizando a sintaxe e uso abordados até então será bidirecional, ou seja, têm-se a possibilidade de enviar e receber dados tanto no lado do cliente quanto no lado do servidor. Os dados transmitidos, são imprimidos na saída padrão do terminal onde o netcat foi acionado, mas pode-se redirecionar o fluxo de dados, utilizando pipes de redirecionamento de saída, de modo que as informações que chegarem terão como destino um arquivo específico, ou mesmo um \textit{FIFO} alocado no sistema de arquivos.
+
+
+\subsubsection{Exemplificando o uso do netcat}
+
+Pode-se acionar o \textit{netcat} para que os dados capturados pelo servidor sejam armazenados em um arquivo, para uma análise posterior com a sua sintaxe de acionamento modificada para:
+
+\scriptsize
+\begin{verbatim}
+nc -l -p porta 1>./captura.log 2>./erros.log
+\end{verbatim}
+\normalsize
+
+Onde os operadores \textit{1} e \textit{2}, significam respectivamente \textit{saída padrão} e \textit{saída de erros padrão} e ambos indicam que seus dados devem ser redirecionados para arquivos específicos.
+
+O acionamento poderia ser dado, utilizando o mesmo princípio, acionando-se o netcat na forma:
+
+\scriptsize
+\begin{verbatim}
+nc -l -p porta &>./captura-geral.log
+\end{verbatim}
+\normalsize
+
+Onde o operador ``$\&$$\>$'' indica que tanto a saída padrão quanto a saída de erros padrão devem ser redirecionados para um arquivo único.
+
+Se necessário, pode-se criar um \textit{FIFO} no sistema de arquivos e utilizá-lo por exemplo, com o propósito de acoplar alguma ferramenta de análise de logs qualquer, paralela a execução do \textit{netcat}, de modo que identifique padrões de comportamento nos dados recebidos e, através disso, possa atuar como guia do processo de coleta de informações, através de uma maneira mais efetiva.
+
+Para que isso seja possível, cria-se um \textit{FIFO}\sigla{FIFO}{First In, First Out} chamado \textit{fifo-teste}, com o comando mkfifo:
+
+\scriptsize
+\begin{verbatim}
+mkfifo fifo-teste
+\end{verbatim}
+\normalsize
+
+Em seguida, deve-se associar o netcat ao \textit{FIFO} recém-criado (O caractere ``$\&$'' é utilizado para enviar o processo para \textit{background}):
+
+\scriptsize
+\begin{verbatim}
+nc -l -p porta > fifo-teste &
+\end{verbatim}
+\normalsize
+
+Para monitorar os dados, de maneira minimalista, e de modo que se possa extrair informações interessantes, pode-se utilizar uma ferramenta filtra o conteúdo do \textit{FIFO} por informações específicas, como o \textit{grep}.
+
+
+\section{Honeytrap}
+
+O Honeytrap \cite{SiteHoneytrap} é um daemon \textit{Honeypot} que observa ataques contra os serviços de rede. Em contraste com outros \textit{Honeypots}, que em geral focam na coleta de \textit{malwares}, o \textit{Honeytrap} pretende capturar os \textit{exploits} iniciais, processando futuramente os traços deixados pelos atacantes.
+
+Ser apto a processar ataques desconhecidos significa que não se exige conhecimento algum sobre o protocolo ou vulnerabilidade explorada durante as investidas. No entanto, uma conexão de entrada pode ser gerenciada de maneiras diferenciadas. Implementa um conceito de servidor dinâmico, monitorando a stream de rede por sessões de entrada e inicia os serviços de escuta no mesmo instante. Cada serviço de escuta pode gerenciar múltiplas conexões e se auto-terminar após algum tempo de ociosidade.
+
+Abaixo segue a saída com a inicialização do honeytrap:
+
+\scriptsize
+\begin{verbatim}
+honeytrap v1.1.0 - Initializing.
+Loading plugin magicPE v0.0.1
+Loading plugin ftpDownload v0.5.3
+Loading plugin tftpDownload v0.4.1
+Loading plugin b64Decode v0.3.1
+Loading plugin vncDownload v0.3
+Loading plugin SaveFile v0.2.1
+Loading plugin submitPostgres v0.1.1
+Servers will run as user honeytrap (1004).
+Servers will run as group nogroup (65534).
+Loading default responses.
+Connections will be handled in mirror mode by default.
+Logging to /opt/honeytrap/honeytrap.log.
+Initialization complete.
+
+honeytrap v1.1.0 Copyright (C) 2005-2008 Tillmann Werner
+[2009-04-10 16:33:56] ---- Trapping attacks via NFQ. ----
+[2009-04-10 16:34:11] ---- honeytrap stopped ----
+\end{verbatim}
+\normalsize
+
+Os dados de chegada são gerenciados por uma \textit{stream} de \textit{bytes} por cada sessão. Essa \textit{stream} pode ser processada por diferentes módulos, por exemplo, para encontrar padrões nas mensagens recebidas, como decodificação de dados, \textit{scan} de \textit{worms} ou a execução de comandos para o \textit{download} de \textit{malwares}.
+
+
+\section{Nephentes}
+
+Nephentes \cite{SiteNephentes} é um Honeypot de Baixa-interação, emulando serviços e vulnerabilidades conhecidas, no intuito de capturar informações informações sobre ataques em potencial. Foi projetado para emular as vulnerabilidades utilizadas pelos \textit{worms} para se espalharem, assim como, capturar os \textit{worms} transmitidos.
+
+Existem muitas maneiras que os worms podem utilizar para se espalharem, por isso o Nephentes é modular. Sua interfaces provêem:
+\begin{itemize}
+    \item Resolução assíncrona de \textit{DNS}
+    \item Emulação de vulnerabilidades
+    \item Download de arquivos
+    \item Submissão de arquivos baixados
+    \item Disparo de eventos
+    \item Gerenciador de código \textit{shell}
+\end{itemize}
+
+Os módulos de vulnerabilidades do \textit{Nephentes} requerem que se possua o conhecimento sobre o funcionamento da vulnerabilidade a ser implantada. Deve-se realizar uma configuração do \textit{daemon}, de modo que imite fielmente seu diálogo com o \textit{worm} e além de seu comportamento, que também deve ser definido, caso a vulnerabilidade em questão fosse explorada.
+
+O \textit{Nephentes} é muito útil na descoberda de novos exploits para velhas vulnerabilidades. Escrevendo-se diálogos em máquinas realmente vulneráveis, pode-se obter novas informações sobre as falhas a partir da análise dos logs gerados neste processo.
+
+
+\section{Argos}
+
+O projeto \textit{Argos} \cite{SiteArgos}, trata-se de um emulador completo e seguro de Sistemas Operacionais para Honeypots. Se baseia no Qemu \cite{SiteQemu} \cite{QEMU}, que utiliza tradução dinâmica de instruções para atingir bons resultados quanto à velocidade de emulação. \cite{Argos}
+
+\textit{Argos} extende o \textit{Qemu} de modo que habilita o mesmo a detectar tentativas de comprometimento remoto no Sistema Operacional hospedado. Utilizando análise dinâmica de defeitos gerados, faz o rastreamento dos dados provenientes da rede e que disparam chamadas de sistema, detectando qualquer tentativa maliciosa de interação remota. Quando o ataque é detectado, uma imagem da memória é registrada em \textit{log}.
+
+Historicamente, o \textit{Argos} foi o primeiro passo para a criação de um \textit{framework} que irá utilizar \textit{Honeypots} da mais nova geração para identificar e produzir maneiras de remediar \textit{worms 0-day} e outros ataques similares. A próxima geração de \textit{Honeypots} não irá precisar que seus endereços de \textit{IP} não sejam reconhecidos como pertencentes a tais, podendo inclusive, ser publicamente disponíveis para gerar tráfego ativamente. Em \textit{Honeypots} atuais, isso não é possível, pois não há distinção entre o tráfego malicioso do tráfego legítimo, ao passo que o \textit{Argos} consegue distinguir isso pois ``assina'' cada tentativa de possível exploração, tendo assim sua capacidade diferenciada de identificar o tráfego malicioso.
+
+Características gerais:
+\begin{itemize}
+    \item Não requer modificações no Sistema Operacional
+    \item Suporta múltiplos Sistemas Operacionais, incluindo \textit{Linux}, \textit{Windows 2000} e \textit{Windows XP} (além de todos aqueles também suportados pelo Qemu)
+    \item Emula processadores \textit{x86}, incluindo as extensões \textit{MMX}, \textit{SSE} e \textit{SS2}
+    \item Roda em diferentes Sistemas Operacionais (\textit{Linux} \/ \textit{Unix}, \textit{Windows}) e \textit{CPUs} (\textit{x86}, \textit{x86\_64}, \textit{PowerPC})
+\end{itemize}
+
+Análise dinâmica de defeitos:
+\begin{itemize}
+    \item Detecta ataques que gerem fluxo arbitrário de dados
+    \item Detecta ataques que realizam a execução de código arbitrário
+    \item Gerencia \textit{DMA}\sigla{DMA}{Direct Memory Access}
+    \item Gerencia os mapeamentos de espaço de usuário no \textit{Kernel}
+\end{itemize}
+

@@ -1,0 +1,56 @@
+\documentclass[12pt,a4paper,ruledheader]{abnt}
+\usepackage[utf8]{inputenc}
+\usepackage[center]{caption2}
+\usepackage[brazil]{babel}
+\usepackage[pdftex]{graphicx}
+\usepackage{latexsym}
+\usepackage{ae}
+\usepackage{hyperref}
+\usepackage[alf,abnt-year-extra-label=yes,abnt-etal-text=it,abnt-and-type=&,abnt-etal-list=1,abnt-etal-cite=1,abnt-missing-year=sd]{abntcite}
+\usepackage[estilo=UFPR]{tabela-simbolos}
+\usepackage{supertabular}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{chngcntr}
+\usepackage{setspace}
+\usepackage{relsize}
+\usepackage{scalefnt}
+\usepackage{url}
+\usepackage{breakurl}
+\usepackage{float}
+
+\counterwithout{footnote}{chapter}
+\counterwithout{table}{chapter}
+\counterwithout{figure}{chapter}
+
+\renewcommand{\rmdefault}{aess}
+\renewcommand{\sfdefault}{aess}
+
+\begin{document}
+    \doublespacing
+    \include{capa}
+    \include{folharosto}
+    \folhaderosto
+    \include{folhaaprovacao}
+    \include{dedicatoria}
+    \include{agradecimentos}
+    \include{epigrafe}
+    \include{resumo}
+    \include{abstract}
+    \sumario
+    \ProximoForaDoSumario
+    \listadefiguras
+    \cleardoublepage
+    \ProximoForaDoSumario
+    \listadetabelas
+    \cleardoublepage
+    \ProximoForaDoSumario
+    \listadesiglas
+    \cleardoublepage
+    \include{introducao}
+    \include{capitulos/1_ameacas}
+    \include{capitulos/2_honeypots}
+    \include{capitulos/3_solucoes}
+    \include{conclusao}
+    \bibliography{bibliografia}
+\end{document}
